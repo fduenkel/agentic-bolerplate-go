@@ -1,0 +1,23 @@
+name: Go checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check initialization
+        id: project
+        run: |
+          if test -f go.mod; then echo 'ready=true' >> "$GITHUB_OUTPUT"; else echo 'ready=false' >> "$GITHUB_OUTPUT"; echo 'Template not initialized; Go checks not executed.'; fi
+      - uses: actions/setup-go@v5
+        if: steps.project.outputs.ready == 'true'
+        with:
+          go-version-file: go.mod
+      - name: Verify and check
+        if: steps.project.outputs.ready == 'true'
+        run: |
+          go mod verify
+          make check
